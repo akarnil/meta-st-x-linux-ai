@@ -33,6 +33,7 @@ import cv2
 from PIL import Image
 import tflite_runtime.interpreter as tflr
 from timeit import default_timer as timer
+from iotc_pipe import IOTCPipe
 
 #init gstreamer
 Gst.init(None)
@@ -854,6 +855,13 @@ class OverlayWindow(Gtk.Window):
                     cr.stroke()
                     cr.move_to(x , (y - (self.ui_cairo_font_size/2)))
                     text_to_display = label + " " + str(int(accuracy)) + "%"
+                    
+                    out = {}
+                    out["object_detected"] = label
+                    out["confidence"] = int(accuracy)
+                    
+                    IOTCPipe.send_object(out)
+
                     cr.show_text(text_to_display)
         return True
 
