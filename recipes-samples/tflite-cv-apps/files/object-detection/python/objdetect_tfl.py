@@ -33,7 +33,7 @@ import cv2
 from PIL import Image
 import tflite_runtime.interpreter as tflr
 from timeit import default_timer as timer
-from iotc_pipe import *
+from iotc_ipc import *
 
 #init gstreamer
 Gst.init(None)
