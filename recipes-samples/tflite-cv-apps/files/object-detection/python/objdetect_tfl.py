@@ -33,7 +33,7 @@ import cv2
 from PIL import Image
 import tflite_runtime.interpreter as tflr
 from timeit import default_timer as timer
-from iotc_pipe import IOTCPipe
+from iotc_pipe import *
 
 #init gstreamer
 Gst.init(None)
@@ -855,13 +855,11 @@ class OverlayWindow(Gtk.Window):
                     cr.stroke()
                     cr.move_to(x , (y - (self.ui_cairo_font_size/2)))
                     text_to_display = label + " " + str(int(accuracy)) + "%"
-                    
                     out = {}
                     out["object_detected"] = label
                     out["confidence"] = int(accuracy)
-                    
-                    IOTCPipe.send_object(out)
-
+                    sender.send_object(out)
+                    print(out)
                     cr.show_text(text_to_display)
         return True
 
@@ -1253,7 +1251,6 @@ class Application:
 if __name__ == '__main__':
     # add signal to catch CRTL+C
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-
     #Tensorflow Lite NN intitalisation
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--image", default="", help="image directory with image to be classified")
@@ -1276,6 +1273,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     try:
+        sender = IOTC_IPC.Sender()
         application = Application(args)
 
     except Exception as exc:

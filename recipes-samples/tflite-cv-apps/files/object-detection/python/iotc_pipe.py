@@ -1,82 +1,65 @@
-import os
+from multiprocessing.connection import Listener
+from multiprocessing.connection import Client
+
 import pickle
 
-DEFAULT_PIPE_PATH = "/tmp/iotc.pipe"
+class IOTC_IPC:
+    PORT=6000
+    ADDRESS="localhost"
 
-class IOTCPipe:
+    class Sender:
+        con = None
+        accepted = None
 
-    is_read = False
+        def __init__(self):
+            self.con = Listener((IOTC_IPC.ADDRESS, IOTC_IPC.PORT))
+            self.accepted = self.con.accept()
 
-    def __init__(self, pipe_name=None):
-        if pipe_name is None:
-            self.pipe_name = DEFAULT_PIPE_PATH
-        else:
-            self.pipe_name = pipe_name
+        def __del__(self):
+            if self.accepted is not None:
+                self.accepted.close()
+                self.con.close()
 
-        if not os.path.exists(self.pipe_name):
-            os.mkfifo(self.pipe_name)
+        def send_object(self,obj):
+            if self.accepted is None:
+                self.__init__(self)
 
-        self.is_read = False
+            self.accepted.send(pickle.dumps(obj))
 
-    def __del__(self):
-        if self.is_read is True:
-            os.remove(self.pipe_name)
+        def send_key_value(self,key,value):
+            out = {}
+            out[key] = value
+            self.send_object(out)
 
-    @classmethod
-    def send_str(cls, str):
-        cls.__init__(cls)
-        with open(cls.pipe_name, 'w') as pipe:
-            pipe.write(str)
-            pipe.flush()
+    class Receiver:
+        con = None
+        running = True
 
-    @classmethod
-    def read_str(cls):
-        cls.__init__(cls)
-        cls.is_read = True
+        def __init__(self):
+            while 1:
+                try:
+                    self.con = Client((IOTC_IPC.ADDRESS, IOTC_IPC.PORT))
+                    break
+                except:
+                    pass
 
-        with open(cls.pipe_name, 'r') as pipe:
-            data = pipe.readline()
+        def __del__(self):
+            if self.con is not None:
+                self.con.close()
+
+        def read_object(self):
+            if self.con is None:
+                self.__init__(self)
+
+            data = None
+            data = self.con.recv()
+            data = pickle.loads(data)
+
             return data
 
-        return None
-
-    @classmethod
-    def send_object(cls,obj):
-        cls.__init__(cls)
-
-        with open(cls.pipe_name, 'wb') as pipe:
-            pickled_data = pickle.dumps(obj)
-            pipe.write(pickled_data)
-            pipe.flush()
-
-    @classmethod
-    def read_object(cls):
-        cls.__init__(cls)
-        cls.is_read = True
-
-        with open(cls.pipe_name, 'rb') as pipe:
-            pickled_data = pipe.read()
-            data = pickle.loads(pickled_data)
-            return data
-
-        return None
-
-    @classmethod
-    def send_key_value(cls,key,value):
-        out = {}
-        out[key] = value
-        cls.send_object(out)
-    
-    @classmethod
-    def read_key_value(cls):
-        return cls.read_object()
 
 if __name__ == "__main__":
-    raw_str = "tv 75%"
-    split = raw_str.split(' ')
-    key = split[0]
-    value = float(split[1].replace('%', 'e-2'))
-    print(key)
-    print(value)
-
-    IOTCPipe().send_key_value(key,value)
+    # r = IOTC_IPC.Receiver
+    x = IOTC_IPC.Sender()
+    while 1:
+        x.send_key_value("a", "b")
