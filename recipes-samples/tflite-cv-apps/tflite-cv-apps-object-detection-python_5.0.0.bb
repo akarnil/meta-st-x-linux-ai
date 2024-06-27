@@ -5,7 +5,7 @@ LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/BSD-3-Clause;md5=550794465ba0ec
 
 SRC_URI  = " file://object-detection/python/110-tflite-object-detection-python.yaml;subdir=${BPN}-${PV} "
 SRC_URI += " file://object-detection/python/objdetect_tfl.py;subdir=${BPN}-${PV} "
-SRC_URI += " file://object-detection/python/iotc_pipe.py;subdir=${BPN}-${PV} "
+SRC_URI += " file://object-detection/python/iotc_ipc.py;subdir=${BPN}-${PV} "
 SRC_URI += " file://object-detection/python/launch_python_objdetect_tfl_coco_ssd_mobilenet.sh;subdir=${BPN}-${PV} "
 SRC_URI += " file://object-detection/python/launch_python_objdetect_tfl_coco_ssd_mobilenet_testdata.sh;subdir=${BPN}-${PV} "
 SRC_URI += " file://object-detection/python/Default.css;subdir=${BPN}-${PV} "
