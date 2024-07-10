@@ -53,6 +53,8 @@ RDEPENDS:${PN} += " \
 	python3-pillow \
 	python3-pygobject \
 	python3-tensorflow-lite \
+    python3-pydbus \
+    iotc-ipc-dbus \
 	tflite-models-coco-ssd-mobilenetv1 \
 	bash \
 "

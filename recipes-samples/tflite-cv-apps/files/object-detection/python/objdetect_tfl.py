@@ -21,7 +21,7 @@ from gi.repository import Gst
 
 import numpy as np
 import argparse
-import signal
+import signal as x_signal
 import os
 import random
 import json
@@ -33,7 +33,7 @@ import cv2
 from PIL import Image
 import tflite_runtime.interpreter as tflr
 from timeit import default_timer as timer
-from iotc_ipc import *
+from iotc_ipc_dbus import *
 
 #init gstreamer
 Gst.init(None)
@@ -858,7 +858,10 @@ class OverlayWindow(Gtk.Window):
                     out = {}
                     out["object_detected"] = label
                     out["confidence"] = int(accuracy)
-                    sender.send_object(out)
+                    # VLAD
+                    sender.signal_emit("NewData",int(accuracy), label,)
+
+                    #sender.send_object(out)
                     print(out)
                     cr.show_text(text_to_display)
         return True
@@ -1250,7 +1253,7 @@ class Application:
 
 if __name__ == '__main__':
     # add signal to catch CRTL+C
-    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    x_signal.signal(x_signal.SIGINT, x_signal.SIG_DFL)
     #Tensorflow Lite NN intitalisation
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--image", default="", help="image directory with image to be classified")
@@ -1270,10 +1273,28 @@ if __name__ == '__main__':
     parser.add_argument("--num_threads", default=None, help="Select the number of threads used by tflite interpreter to run inference")
     parser.add_argument("--maximum_detection", default=10, type=int, help="Adjust the maximum number of object detected in a frame accordingly to your NN model (default is 10)")
     parser.add_argument("--threshold", default=0.60, type=float, help="threshold of accuracy above which the boxes are displayed (default 0.60)")
+    parser.add_argument("--dbus_obj", default="", type=str)
     args = parser.parse_args()
 
     try:
-        sender = IOTC_IPC.Sender()
+        server_xml = """
+		<node>
+			<interface name="org.freedesktop.IOTC.AIServer">
+				<signal name="NewData">
+					<arg direction="out" type="u" name="confidence"/>
+					<arg direction="out" type="s" name="object_detected"/>
+				</signal>
+			</interface>
+		</node>
+        """
+
+        dbus_obj_name = args.dbus_obj
+        print(dbus_obj_name)
+        sender = IOTC_IPC.Sender(dbus_obj_name, dbus_obj_name + ".AISignals", is_system = True)
+        sender.change_server_xml(server_xml)
+
+        sender.start_server()
+
         application = Application(args)
 
     except Exception as exc:
